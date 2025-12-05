@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         ),
-        initialRoute: 'login',
+        initialRoute: 'register',
         routes: {
           'home': (context) => HomePage(),
           'login': (context) => LoginPage(),
