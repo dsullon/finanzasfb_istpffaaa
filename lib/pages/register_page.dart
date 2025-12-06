@@ -1,6 +1,9 @@
-import 'package:finanzasfb/widgets/auth_header_background.dart';
+import 'package:finanzasfb/models/models.dart';
+import 'package:finanzasfb/providers/registro_form_provider.dart';
+import 'package:finanzasfb/services/services.dart';
 import 'package:finanzasfb/widgets/widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class RegisterPage extends StatelessWidget {
   const RegisterPage({super.key});
@@ -20,7 +23,11 @@ class RegisterPage extends StatelessWidget {
                       "Registro de usuario",
                       style: TextTheme.of(context).titleMedium,
                     ),
-                    _FormularioRegistro(),
+                    SizedBox(height: 20.0),
+                    ChangeNotifierProvider(
+                      create: (_) => RegistroFormProvider(),
+                      child: _FormularioRegistro(),
+                    ),
                   ],
                 ),
               ),
@@ -37,7 +44,9 @@ class _FormularioRegistro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final registroForm = Provider.of<RegistroFormProvider>(context);
     return Form(
+      key: registroForm.formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: Column(
         children: [
@@ -48,6 +57,7 @@ class _FormularioRegistro extends StatelessWidget {
               labelText: "Nombres",
               prefixIcon: Icon(Icons.person_2),
             ),
+            onChanged: (value) => registroForm.nombre = value,
             validator: (value) {
               return (value != null && value.isNotEmpty)
                   ? null
@@ -62,6 +72,7 @@ class _FormularioRegistro extends StatelessWidget {
               labelText: "Teléfono",
               prefixIcon: Icon(Icons.phone_android),
             ),
+            onChanged: (value) => registroForm.telefono = value,
           ),
           SizedBox(height: 10),
           TextFormField(
@@ -71,6 +82,7 @@ class _FormularioRegistro extends StatelessWidget {
               labelText: "Email",
               prefixIcon: Icon(Icons.alternate_email),
             ),
+            onChanged: (value) => registroForm.email = value,
             validator: (value) {
               String pattern =
                   r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
@@ -90,9 +102,46 @@ class _FormularioRegistro extends StatelessWidget {
               labelText: "Contraseña",
               prefixIcon: Icon(Icons.lock_outline),
             ),
+            onChanged: (value) => registroForm.password = value,
             validator: (value) {
-              // TODO: Validar que la contraseña sea como mínimo 6 caracteres
+              return (value != null && value.length >= 6)
+                  ? null
+                  : "Debe ingresar como mínimo 6 caracteres";
             },
+          ),
+          SizedBox(height: 30.0),
+
+          MaterialButton(
+            color: Colors.red,
+            disabledColor: Colors.grey,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            onPressed: registroForm.isProcessing
+                ? null
+                : () async {
+                    if (!registroForm.isFormValid()) return;
+                    registroForm.isProcessing = true;
+                    final authServices = Provider.of<AuthServices>(
+                      context,
+                      listen: false,
+                    );
+                    final usuario = User(
+                      email: registroForm.email,
+                      name: registroForm.nombre,
+                      password: registroForm.password,
+                      phone: registroForm.telefono,
+                    );
+                    await authServices.crearUsuario(usuario);
+                    registroForm.isProcessing = false;
+                  },
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 80, vertical: 15),
+              child: Text(
+                registroForm.isProcessing ? "Procesando" : "Registrar",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
           ),
         ],
       ),
